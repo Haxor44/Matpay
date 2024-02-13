@@ -59,18 +59,45 @@ func main() {
 	mux.HandleFunc("/pay", submitOrder)
 	mux.HandleFunc("/callback", callbackUrl)
 	mux.HandleFunc("/test", test)
-	err := http.ListenAndServe(":8080", mux)
+	err := http.ListenAndServe(":8085", mux)
 	fmt.Printf("Starting server on port 8085!!!")
 	if errors.Is(err, http.ErrServerClosed) {
 		fmt.Printf("server closed\n")
 	} else if err != nil {
-		fmt.Printf("error starting server\n", err)
+		fmt.Printf("error starting server %s\n", err)
 		os.Exit(1)
 	}
 }
 
 func callbackUrl(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("This is the callback")
+	token := getAcessToken()
+	fmt.Printf("This is the callback: ")
+	orderID := r.URL.Query().Get("OrderTrackingId")
+	url := "https://pay.pesapal.com/v3/api/Transactions/GetTransactionStatus?orderTrackingId=" + orderID
+	//send a get request to pesapal endpoint
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Printf("%s", err)
+	}
+
+	var bearer = "Bearer " + token
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", bearer)
+
+	client := &http.Client{}
+	// sending the request
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Printf("%s", err)
+	}
+
+	response, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("%s", err)
+	}
+	fmt.Printf("Response is: %s\n", response)
+	w.Write(response)
 }
 
 func submitOrder(w http.ResponseWriter, r *http.Request) {
