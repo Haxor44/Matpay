@@ -59,7 +59,7 @@ func main() {
 	mux.HandleFunc("/pay", submitOrder)
 	mux.HandleFunc("/callback", callbackUrl)
 	mux.HandleFunc("/test", test)
-	err := http.ListenAndServe(":8085", mux)
+	err := http.ListenAndServeTLS(":8085", "server.pem", "server.key", mux)
 	fmt.Printf("Starting server on port 8085!!!")
 	if errors.Is(err, http.ErrServerClosed) {
 		fmt.Printf("server closed\n")
